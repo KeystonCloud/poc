@@ -70,4 +70,5 @@ git push origin master
 ```
 
 **5. Access to app example via Gateway:**
+
 Open your web browser and navigate to `http://localhost:5000/mon-site`
