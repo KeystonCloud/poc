@@ -1,0 +1,33 @@
+#!/bin/sh
+echo "[GATEWAY] Push reçu !"
+
+# 1. Définir les chemins
+APP_NAME="mon-site"
+GATEWAY_ADDR="http://localhost:5000"
+GIT_DIR="."
+WORK_TREE="/tmp/poc_build"
+mkdir -p $WORK_TREE
+
+# 2. Extraire le code qui vient d'être "pushé"
+git --work-tree=$WORK_TREE --git-dir=$GIT_DIR checkout master -f
+echo "[GATEWAY] Code extrait dans $WORK_TREE"
+
+# 3. Ajouter les fichiers à IPFS
+#    -r = récursif (pour les dossiers)
+#    -Q = 'Quiet', n'affiche que le hash final
+echo "[GATEWAY] Ajout à IPFS..."
+NEW_HASH=$(ipfs add -r -Q $WORK_TREE | tail -n1)
+
+echo "[GATEWAY] Nouveau hash IPFS : $NEW_HASH"
+
+# 4. Nettoyer le dossier temporaire
+rm -rf $WORK_TREE
+
+# 5. Informer la "Gateway" de la nouvelle app
+echo "[GATEWAY] Mise à jour de l'application \"$APP_NAME\" à l'adresse $GATEWAY_ADDR/update"
+curl -X POST -H "Content-Type: application/json" \
+     -d "{\"appName\": \"$APP_NAME\",\"hash\": \"$NEW_HASH\"}" \
+     $GATEWAY_ADDR/update
+
+echo ""
+echo "[GATEWAY] Déploiement terminé !"
